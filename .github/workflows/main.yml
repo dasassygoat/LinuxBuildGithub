@@ -1,0 +1,58 @@
+name: Actions 😎
+
+on: 
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  free-disk-space:
+    runs-on: self-hosted
+    steps:
+
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        # this might remove tools that are actually needed,
+        # if set to "true" but frees about 6 GB
+        tool-cache: true
+        
+        # all of these default to true, but feel free to set to
+        # "false" if necessary for your workflow
+        android: true
+        dotnet: false
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
+  
+  build:
+    if: github.event.pull_request.merged == true
+    name: Build my project ✨
+    runs-on: self-hosted
+    steps:
+      # Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Build
+      - name: Build project
+        uses: game-ci/unity-builder@v4
+        env:
+          #UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: StandaloneWindows64
+          allowDirtyBuild: true
+
+      # Output
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Build
+          path: build
